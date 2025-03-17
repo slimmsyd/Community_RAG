@@ -1,0 +1,16 @@
+[features]
+seeds = false
+cargo-args = ["--features", "sbf"]
+
+[programs.devnet]
+street_economics_nft = "51GtJn4L6DnhMx2TCYwve2AJueSTwcVM4rzk4UC16VH6"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "devnet"
+wallet = "./target/deploy/street_economics_nft-keypair.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts" 

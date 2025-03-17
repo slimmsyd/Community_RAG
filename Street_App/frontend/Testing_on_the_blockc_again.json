@@ -1,0 +1,13 @@
+{
+  "type": "milestone",
+  "userId": "678ee603635820eaa15fe202",
+  "milestone": {
+    "title": "Testing on the blockc again",
+    "description": "Test",
+    "date": "2025-01-24T05:00:00.000Z"
+  },
+  "creator": {
+    "id": "678ee603635820eaa15fe202"
+  },
+  "timestamp": "2025-01-25T01:34:10.626Z"
+}

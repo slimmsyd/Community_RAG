@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "types": ["mocha", "node"],
+    "typeRoots": ["./node_modules/@types", "./target/types"],
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  }
+} 

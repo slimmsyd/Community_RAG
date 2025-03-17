@@ -1,0 +1,112 @@
+# Large files that exceed GitHub's file size limits
+Street_App/programs/test-ledger/rocksdb/
+Street_App/programs/test-ledger/*.log
+Street_App/programs/test-ledger/validator-*.log
+
+# PDF_LLM specific
+pdf_llm/myenv/
+pdf_llm/vectorstore/
+pdf_llm/vectorstores/
+pdf_llm/uploads/
+pdf_llm/data/*.pdf
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+
+# Node.js specific
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.next/
+out/
+.nuxt/
+.cache/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Docker
+docker-compose.override.yml
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+
+# ML specific
+models/
+*.h5
+*.pkl
+*.joblib
+*.model
+
+# LangChain / Vector DB
+chroma/
+vectorstore/
+vectorstores/
+
+# Authentication files
+auth_token.json
+*.pem
+*.key 

@@ -1,0 +1,9 @@
+[provider]
+cluster = "localnet"
+wallet = "./program/new-keypair.json"
+
+[programs.localnet]
+my_program = "DsfWRN2chL7NqPRHBnkVcxztcXPuHJQcR8SfaqsagRQt"
+
+[programs.devnet]
+my_program = "DsfWRN2chL7NqPRHBnkVcxztcXPuHJQcR8SfaqsagRQt"

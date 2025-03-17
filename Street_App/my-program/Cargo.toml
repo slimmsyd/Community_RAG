@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["clients/rust", "program"]
+
+[profile.release]
+overflow-checks = true
+
+[workspace.metadata.cli]
+anchor = "0.30.1"
+solana = "2.1.11"
+
+# Specify Rust toolchains for rustfmt, clippy, and build.
+# Any unprovided toolchains default to stable.
+[workspace.metadata.toolchains]
+format = "1.84.0"
+lint = "1.84.0"
