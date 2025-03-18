@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/app/api/lib/dbConnect';
-import CryptoUser from '@/app/api/models/CryptoUser';
-import User from '@/app/api/models/User';
+import dbConnect from '@/utils/dbConnect';
+import CryptoUser from '@/models/CryptoUser';
+import User from '@/models/User';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/lib/authOptions';
+import { authOptions } from '@/utils/auth';
 
 export async function POST(req: Request) {
   try {

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
-import Invitation from '@/app/api/models/Invitation';
-import Workspace from '@/app/api/models/Workspace';
-import User from '@/app/api/models/User';
+import Invitation from '@/models/Invitation';
+import Workspace from '@/models/Workspace';
+import User from '@/models/User';
 
 export async function GET(
   request: Request,

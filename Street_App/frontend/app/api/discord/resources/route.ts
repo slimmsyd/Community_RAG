@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/utils/mongoose';
-import Resource from '@/app/api/models/Resource';
-import User from '@/app/api/models/User';
+import Resource from '@/models/Resource';
+import User from '@/models/User';
 
 // Utility function to extract URL from Discord message
 function extractUrl(content: string): string | null {
