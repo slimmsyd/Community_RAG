@@ -1,7 +1,7 @@
 import NextAuth from "next-auth"
-import { authOptions } from "@/app/api/lib/authOptions"
-import dbConnect from '@/lib/dbConnect';
-import User from '@/app/api/models/User';
+import { authOptions } from "../../lib/authOptions";
+import dbConnect from '../../lib/dbConnect';
+import User from '../../models/User';
 import { Session } from 'next-auth';
 
 interface DbUser {
