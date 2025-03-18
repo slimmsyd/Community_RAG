@@ -9,7 +9,8 @@ langchain-openai
 # The correct package name is langchain-text-splitters (with an 's' at the end)
 langchain-text-splitters
 openai==1.6.0
-pydantic==2.5.3
+# Let pip resolve the pydantic version that works with all dependencies
+pydantic
 pandas==2.2.0
 PyPDF2==3.0.1
 chromadb==0.4.22
