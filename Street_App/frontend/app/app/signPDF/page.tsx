@@ -396,7 +396,11 @@ export default function SignPDFPage() {
                   onViewerReady={handlePdfViewerReady}
                 >
                   <SignatureOverlay
-                    pdfDimensions={pdfDimensions}
+                    pdfDimensions={{
+                      width: pdfDimensions.width,
+                      height: pdfDimensions.height,
+                      pageCount: totalPages
+                    }}
                     fields={signatureFields}
                     currentPage={currentPage}
                     selectedField={selectedField}
