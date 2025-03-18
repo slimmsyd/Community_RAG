@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
-import CryptoUser from '@/models/CryptoUser';
-import User from '@/models/User';
+import CryptoUser from '@/utils/models/CryptoUser';
+import User from '@/utils/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/utils/auth';
 

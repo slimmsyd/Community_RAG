@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
-import Invitation from '@/models/Invitation';
-import Workspace from '@/models/Workspace';
-import User from '@/models/User';
+import Invitation from '@/utils/models/Invitation';
 
 export async function GET(
   request: Request,
