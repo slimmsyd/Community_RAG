@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { connectToDatabase } from '@/lib/mongoose';
+import { connectToDatabase } from '@/utils/mongoose';
 import mongoose from 'mongoose';
 
 // Define the UserStats schema

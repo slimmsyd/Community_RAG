@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/lib/authOptions";
-import dbConnect from '@/lib/dbConnect';
+import dbConnect from '@/utils/dbConnect';
 import Workspace from '@/app/api/models/Workspace';
 import User from '@/app/api/models/User';
 import Invitation from '@/app/api/models/Invitation';
 import crypto from 'crypto';
-import { sendEmail } from '@/lib/email';
+import { sendEmail } from '@/utils/email';
 
 export async function POST(req: Request) {
   try {

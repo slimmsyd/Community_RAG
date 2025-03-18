@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import Resource from '@/app/api/models/Resource';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/lib/authOptions';
-import { connectToDatabase } from '@/lib/mongoose';
+import { connectToDatabase } from '@/utils/mongoose';
 import mongoose from 'mongoose';
 
 // GET /api/resources - Get all resources

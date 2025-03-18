@@ -7,7 +7,7 @@ import NavWrapper from '@/components/nav-wrapper';
 import FooterWrapper from '@/components/footer-wrapper';
 import { GoogleTagManager } from "@next/third-parties/google";
 import SessionWrapper from '@/app/ProvidersWrapper';
-import { validateEnv } from '@/lib/env';
+import { validateEnv } from '@/utils/env';
 import dynamic from 'next/dynamic';
 
 const inter = Inter({ subsets: ['latin'] });

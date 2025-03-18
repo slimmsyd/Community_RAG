@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
+import dbConnect from '@/utils/dbConnect';
 import mongoose from 'mongoose';
 
 export async function GET() {

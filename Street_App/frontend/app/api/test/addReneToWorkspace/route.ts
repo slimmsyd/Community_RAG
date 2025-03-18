@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
+import dbConnect from '@/utils/dbConnect';
 import User from '@/app/api/models/User';
 import Workspace from '@/app/api/models/Workspace';
 import mongoose from 'mongoose';

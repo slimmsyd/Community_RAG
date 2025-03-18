@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { RelationshipService } from '@/lib/arweave/relationshipService';
-import dbConnect from '@/lib/dbConnect';
+import dbConnect from '@/utils/dbConnect';
 import User from '@/app/api/models/User';
 
 export async function POST(req: Request) {

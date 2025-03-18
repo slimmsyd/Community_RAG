@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongoose';
+import { connectToDatabase } from '@/utils/mongoose';
 import Resource from '@/app/api/models/Resource';
 import User from '@/app/api/models/User';
 
