@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
+const EmptyModulePlugin = require('./empty-module-plugin');
 
 const nextConfig = {
   images: {
@@ -43,6 +44,14 @@ const nextConfig = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname),
     };
+    
+    // Add our EmptyModulePlugin to handle missing 'lib/utils'
+    config.plugins.push(
+      new EmptyModulePlugin({
+        modules: ['lib/utils'],
+        verbose: true
+      })
+    );
     
     return config;
   },
