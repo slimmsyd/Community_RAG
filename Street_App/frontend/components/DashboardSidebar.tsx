@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
-// UI Componentss
+// UI Components
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -70,7 +70,6 @@ export function DashboardSidebar({
       category: "Tools",
       items: [
         { id: "readPDF", label: "PDF Reader", icon: PDFIcon },
-        { id: "signPDF", label: "PDF Signer", icon: PDFIcon },
         // { id: "submit", label: "Crypto Submit", icon: Plus },
         // { id: "list", label: "Crypto List", icon: Users },
         { id: "resources", label: "Resources", icon: BookOpen },

@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../lib/authOptions"; 
-import dbConnect from '../../../lib/dbConnect';
-import User from '../../../models/User';
+import { authOptions } from "@/app/api/lib/authOptions";
+import dbConnect from '@/lib/dbConnect';
+import User from '@/app/api/models/User';
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;

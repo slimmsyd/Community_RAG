@@ -63,6 +63,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
+import { useArweaveUpload } from "@/hooks/useArweaveUpload";
 import { useRouter, usePathname } from "next/navigation";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { useUserImages } from "@/hooks/useUserImages";
@@ -223,7 +224,10 @@ export default function Dashboard() {
     return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
   });
 
-
+  const { uploadFile, uploadProgress, isUploading, error } = useArweaveUpload({
+    userId: userProfile?.user?.id || "unknown",
+    familyId: "family456",
+  });
 
   const {
     images,
