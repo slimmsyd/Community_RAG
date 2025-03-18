@@ -1,0 +1,5 @@
+This is a test PDF document for validating the API deployment.
+
+It contains some simple text to test the PDF processing pipeline.
+
+The main topic of this document is API validation.
