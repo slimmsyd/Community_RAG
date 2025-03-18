@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { cn } from "./lib/utils";
+import { cn } from "@/utils/cn";
 
 // UI Components
 import { Button } from "@/components/ui/button";

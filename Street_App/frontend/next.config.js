@@ -38,6 +38,13 @@ const nextConfig = {
         crypto: false,
       };
     }
+    
+    // Add specific alias resolution for utils
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/utils': require('path').resolve(__dirname, './utils'),
+    };
+    
     return config;
   },
 }
