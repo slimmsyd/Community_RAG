@@ -140,12 +140,73 @@ npm install react-markdown
 
 ## Deployment
 
-For deploying to a production environment, consider:
+### Local Deployment
+
+For local deployment, you can use the Flask development server:
+
+```bash
+./run_api.sh
+```
+
+Or manually:
+
+```bash
+export FLASK_APP=api.py
+export FLASK_ENV=development
+export PORT=5002
+python api.py
+```
+
+The server will start on port 5002 by default.
+
+### AWS Lambda Deployment
+
+This project includes files for deploying the API to AWS Lambda with API Gateway:
+
+1. **Prerequisites**:
+   - AWS CLI installed and configured with appropriate permissions
+   - Python 3.9 or newer
+   - An AWS account
+
+2. **Deployment Steps**:
+   
+   ```bash
+   # Set your environment variables
+   export AWS_REGION=us-east-1  # Or your preferred region
+   export S3_BUCKET=pdf-llm-storage-youruniquename  # Must be globally unique
+   
+   # Run the deployment script
+   ./deploy_lambda.sh
+   ```
+
+3. **What the Deployment Script Does**:
+   - Creates an S3 bucket for storing PDFs and vector databases
+   - Packages the Lambda function and dependencies
+   - Creates a Lambda function with the appropriate permissions
+   - Sets up an API Gateway with endpoints for /upload, /query, and /health
+   - Configures CORS for frontend integration
+   - Outputs the API URLs for use in your frontend
+
+4. **After Deployment**:
+   Update your frontend `.env.local` file with the generated API URL:
+   ```
+   NEXT_PUBLIC_API_URL=https://your-api-id.execute-api.region.amazonaws.com/prod/pdf
+   ```
+
+5. **Serverless Benefits**:
+   - Automatic scaling based on demand
+   - Pay only for what you use
+   - No server management
+   - High availability
+
+### Other Deployment Options
+
+For other production environments, consider:
 
 1. Using a production WSGI server like Gunicorn
 2. Setting up proper CORS configuration
 3. Implementing authentication
-4. Using a cloud hosting provider (Heroku, AWS, Google Cloud, etc.)
+4. Using other cloud hosting providers (Heroku, Google Cloud, etc.)
 
 ## License
 

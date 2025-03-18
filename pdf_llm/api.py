@@ -10,7 +10,6 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.evaluation import load_evaluator
 
 # Updated Pydantic imports
 from pydantic import BaseModel, Field
