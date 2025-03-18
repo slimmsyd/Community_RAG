@@ -46,9 +46,22 @@ const nextConfig = {
     };
     
     // Add our EmptyModulePlugin to handle missing 'lib/utils'
+    // But ignore paths that are actually used for authentication and DB connections
     config.plugins.push(
       new EmptyModulePlugin({
         modules: ['lib/utils'],
+        exactPaths: [
+          './lib/utils', 
+          '../lib/utils', 
+          '../../lib/utils',
+          '../components/lib/utils',
+          '@/lib/utils'
+        ],
+        ignorePaths: [
+          'app/api/lib',           // Ignore API lib paths
+          'app/api/auth',          // Ignore Auth paths
+          '@/lib/dbConnect',       // Ignore DB connection paths
+        ],
         verbose: true
       })
     );

@@ -7,11 +7,15 @@
 class EmptyModulePlugin {
   constructor(options = {}) {
     this.modulesToIgnore = options.modules || [];
+    this.exactPaths = options.exactPaths || [];
+    this.ignorePaths = options.ignorePaths || [];
     this.verbose = options.verbose || false;
   }
 
   apply(compiler) {
     const modulesToIgnore = this.modulesToIgnore;
+    const exactPaths = this.exactPaths;
+    const ignorePaths = this.ignorePaths;
     const verbose = this.verbose;
 
     // Hook into the normal module factory
@@ -21,6 +25,22 @@ class EmptyModulePlugin {
         if (!resolveData) return;
 
         const request = resolveData.request;
+        
+        // Skip if the request is in the ignore paths
+        const shouldSkip = ignorePaths.some(path => request.includes(path));
+        if (shouldSkip) {
+          return;
+        }
+        
+        // Check if the request matches any exact paths
+        const exactMatch = exactPaths.some(path => request === path);
+        if (exactMatch) {
+          if (verbose) {
+            console.log(`[EmptyModulePlugin] Exact match: Providing empty module for: ${request}`);
+          }
+          resolveData.request = require.resolve('./dummy-utils.js');
+          return;
+        }
         
         // Check if the request includes any of our specified modules to ignore
         const shouldIgnore = modulesToIgnore.some(moduleToIgnore => 
