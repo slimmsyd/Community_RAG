@@ -70,6 +70,7 @@ export function DashboardSidebar({
       category: "Tools",
       items: [
         { id: "readPDF", label: "PDF Reader", icon: PDFIcon },
+        { id: "signPDF", label: "PDF Signer", icon: PDFIcon },
         // { id: "submit", label: "Crypto Submit", icon: Plus },
         // { id: "list", label: "Crypto List", icon: Users },
         { id: "resources", label: "Resources", icon: BookOpen },

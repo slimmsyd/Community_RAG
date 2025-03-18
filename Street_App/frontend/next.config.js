@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   images: {
     domains: [
@@ -38,6 +40,13 @@ const nextConfig = {
         crypto: false,
       };
     }
+    
+    // Simplified path aliases configuration
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname),
+    };
+    
     return config;
   },
 }

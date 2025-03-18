@@ -65,6 +65,7 @@ export default function ReadPDFPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleNavigation = (page: string) => {
     router.push(`/app/${page}`);
@@ -253,7 +254,10 @@ export default function ReadPDFPage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      // Add a small delay to ensure smooth transition of the "Thinking..." message
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 300);
     }
   };
 
@@ -272,6 +276,15 @@ export default function ReadPDFPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Focus input field after loading state changes to false
+  useEffect(() => {
+    if (!isLoading && pdfSessionId) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 500);
+    }
+  }, [isLoading, pdfSessionId]);
 
   return (
     <div className="flex h-screen bg-white">
@@ -411,7 +424,7 @@ export default function ReadPDFPage() {
           
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              <AnimatePresence mode="wait">
+              <AnimatePresence initial={false} mode="sync">
                 {messages.length === 0 && !pdfUrl ? (
                   <motion.div
                     key="upload-prompt"
@@ -444,6 +457,7 @@ export default function ReadPDFPage() {
                       key={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
                       className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div 
@@ -469,6 +483,8 @@ export default function ReadPDFPage() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    key="thinking-indicator"
                     className="flex justify-start"
                   >
                     <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-2">
@@ -496,6 +512,7 @@ export default function ReadPDFPage() {
                   }
                 }}
                 className="flex-1 border-gray-300 focus:ring-[#2BAC3E] focus:border-[#2BAC3E]"
+                ref={inputRef}
               />
               <Button
                 onClick={handleSendMessage}
