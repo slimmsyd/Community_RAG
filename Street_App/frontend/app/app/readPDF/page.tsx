@@ -36,7 +36,8 @@ import { useToast } from "@/components/ui/use-toast";
 import ReactMarkdown from 'react-markdown';
 
 // Define the Flask API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5002";
+// const API_BASE_URL =  "http://localhost:8000";
+const API_BASE_URL =  "http://agentp-Publi-bWOcL63CIdjh-1015568917.us-east-1.elb.amazonaws.com";
 
 interface Message {
   id: string;
@@ -215,6 +216,10 @@ export default function ReadPDFPage() {
           session_id: pdfSessionId,
           question: userMessage.content,
           structured: false, // Use simple answers for chat
+          chat_history: messages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
         }),
       });
       
@@ -233,7 +238,6 @@ export default function ReadPDFPage() {
       };
       
       setMessages(prev => [...prev, aiMessage]);
-      
     } catch (error) {
       console.error('Error querying PDF:', error);
       
@@ -257,6 +261,9 @@ export default function ReadPDFPage() {
     }
   };
 
+  useEffect(() => {
+   
+  }, [isLoading]);
   const handleReset = () => {
     setPdfUrl(null);
     setPdfName(null);
