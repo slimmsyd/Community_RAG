@@ -39,10 +39,11 @@ const nextConfig = {
       };
     }
     
-    // Add specific alias resolution for utils
+    // Add specific alias resolution for utils and models
     config.resolve.alias = {
       ...config.resolve.alias,
       '@/utils': require('path').resolve(__dirname, './utils'),
+      '@/models': require('path').resolve(__dirname, './models'),
     };
     
     return config;

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
-import Invitation from '@/utils/models/Invitation';
+import { Invitation } from '@/models';
 
 export async function GET(
   request: Request,

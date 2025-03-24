@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
-import Invitation from '@/utils/models/Invitation';
-import Workspace from '@/utils/models/Workspace';
-import User from '@/utils/models/User';
+import { Invitation, Workspace, User } from '@/models';
 import mongoose, { ClientSession } from 'mongoose';
 
 export async function POST(
