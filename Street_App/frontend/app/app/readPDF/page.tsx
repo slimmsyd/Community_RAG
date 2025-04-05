@@ -25,7 +25,8 @@ import {
   FileCheck,
   SearchCheck,
   Copy,
-  ListChecks
+  ListChecks,
+  FileOutput
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
@@ -59,7 +60,7 @@ interface Message {
   timestamp: Date;
 }
 
-type TabType = "chat" | "summary" | "codes" | "solicitation" | "requirements" | "analysis";
+type TabType = "chat" | "summary" | "codes" | "solicitation" | "requirements" | "analysis" | "proposal";
 
 export default function ReadPDFPage() {
   const router = useRouter();
@@ -92,6 +93,10 @@ export default function ReadPDFPage() {
   // Add these new state variables after the existing ones
   const [isExtractingRequirements, setIsExtractingRequirements] = useState(false);
   const [requirementsData, setRequirementsData] = useState<any>(null);
+  
+  // Add proposal state and loading state
+  const [proposalData, setProposalData] = useState<any>(null);
+  const [isGeneratingProposal, setIsGeneratingProposal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -510,6 +515,72 @@ export default function ReadPDFPage() {
     }
   };
 
+  // Add this new function to generate a proposal
+  const generateProposal = async () => {
+    if (!pdfSessionId || !requirementsData) {
+      toast({
+        title: "Requirements Needed",
+        description: "Please extract detailed requirements first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingProposal(true);
+    setActiveTab("proposal");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/generate_proposal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          session_id: pdfSessionId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate proposal');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setProposalData(data.proposal);
+        
+        // Add message about completed proposal generation
+        const proposalMessage: Message = {
+          id: Date.now().toString(),
+          content: `📝 **Proposal Draft Generated**\n\nI've created a draft proposal based on the solicitation requirements including:\n- **Minimum Required Elements** (critical compliance items)\n- Executive Summary\n- Technical Approach\n- Past Performance References\n- Pricing Structure\n\nYou can view and edit these sections in the Proposal tab.`,
+          role: "assistant",
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, proposalMessage]);
+
+        toast({
+          title: "Proposal Generated",
+          description: "Successfully generated proposal content based on requirements",
+        });
+      } else {
+        toast({
+          title: "Generation Failed",
+          description: data.error || "Unknown error occurred",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating proposal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate proposal.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingProposal(false);
+    }
+  };
+
   useEffect(() => {
    
   }, [isLoading]);
@@ -832,6 +903,19 @@ export default function ReadPDFPage() {
                         >
                           <FileSearch className="h-4 w-4 mr-2" />
                           Analysis
+                        </button>
+                      )}
+                      {requirementsData && (
+                        <button
+                          onClick={() => setActiveTab("proposal")}
+                          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === "proposal"
+                              ? "bg-gray-100 text-gray-900"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                        >
+                          <FileOutput className="h-4 w-4 mr-2" />
+                          Proposal
                         </button>
                       )}
                     </div>
@@ -1609,6 +1693,253 @@ export default function ReadPDFPage() {
                             </div>
                           </CardContent>
                         </Card>
+                      </div>
+                    )}
+                    
+                    {/* Proposal Tab */}
+                    {activeTab === "proposal" && (
+                      <div className="h-full overflow-y-auto p-4">
+                        {!proposalData ? (
+                          <Card className="mx-auto max-w-4xl">
+                            <CardHeader>
+                              <CardTitle className="text-xl">Generate Proposal</CardTitle>
+                              <CardDescription>
+                                Click the "Generate Proposal" button to create a comprehensive proposal draft 
+                                based on the solicitation analysis and extracted requirements.
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex justify-center py-10">
+                              <Button
+                                onClick={generateProposal}
+                                disabled={isGeneratingProposal || !requirementsData}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                {isGeneratingProposal ? (
+                                  <>
+                                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileOutput className="h-5 w-5 mr-2" />
+                                    Generate Proposal
+                                  </>
+                                )}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <div className="space-y-4 max-w-4xl mx-auto">
+                            {/* Minimum Requirements Card - NEW PRIORITY CARD */}
+                            <Card className="border-red-200">
+                              <CardHeader className="bg-red-50">
+                                <CardTitle className="text-lg text-red-700 flex justify-between items-center">
+                                  <span>⚠️ Minimum Proposal Requirements</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.minimum_requirements || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Minimum requirements copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                                <CardDescription className="text-red-600">
+                                  These requirements MUST be included for a compliant proposal. Missing any will risk disqualification.
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.minimum_requirements || "No minimum requirements identified."}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Executive Summary Card */}
+                            <Card className="border-purple-200">
+                              <CardHeader className="bg-purple-50">
+                                <CardTitle className="text-lg text-purple-700 flex justify-between items-center">
+                                  <span>Executive Summary</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.executive_summary || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Executive summary copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.executive_summary || ""}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Technical Approach Card */}
+                            <Card className="border-blue-200">
+                              <CardHeader className="bg-blue-50">
+                                <CardTitle className="text-lg text-blue-700 flex justify-between items-center">
+                                  <span>Technical Approach</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.technical_approach || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Technical approach copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.technical_approach || ""}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Past Performance Card */}
+                            <Card className="border-green-200">
+                              <CardHeader className="bg-green-50">
+                                <CardTitle className="text-lg text-green-700 flex justify-between items-center">
+                                  <span>Past Performance</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.past_performance || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Past performance copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.past_performance || ""}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Pricing Structure Card */}
+                            <Card className="border-amber-200">
+                              <CardHeader className="bg-amber-50">
+                                <CardTitle className="text-lg text-amber-700 flex justify-between items-center">
+                                  <span>Pricing Structure</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.pricing_guidance || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Pricing guidance copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.pricing_guidance || ""}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Footer Action Button */}
+                            <div className="flex justify-center py-4">
+                              <Button
+                                onClick={generateProposal}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                disabled={isGeneratingProposal}
+                              >
+                                {isGeneratingProposal ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Regenerating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileOutput className="h-4 w-4 mr-2" />
+                                    Regenerate Proposal
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
