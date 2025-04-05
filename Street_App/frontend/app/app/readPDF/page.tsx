@@ -526,8 +526,40 @@ export default function ReadPDFPage() {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (activeTab === "chat" && messages.length > 0) {
+      // Use a more robust approach with multiple attempts
+      const scrollToBottom = () => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: "smooth",
+            block: "end" 
+          });
+        }
+      };
+      
+      // Initial scroll
+      scrollToBottom();
+      
+      // Multiple attempts with increasing delays to ensure scroll happens after DOM updates
+      const timeouts = [50, 150, 500].map(delay => 
+        setTimeout(scrollToBottom, delay)
+      );
+      
+      return () => timeouts.forEach(clearTimeout);
+    }
+  }, [messages, activeTab]);
+  
+  // Scroll to bottom when switching to chat tab
+  useEffect(() => {
+    if (activeTab === "chat" && messages.length > 0) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: "smooth",
+          block: "end"
+        });
+      }, 100);
+    }
+  }, [activeTab, messages.length]);
 
   return (
     <div className="flex h-screen bg-white">
@@ -649,53 +681,55 @@ export default function ReadPDFPage() {
         <ResizableHandle withHandle className="bg-gray-200 border-l border-r border-gray-300" />
         
         {/* Chat and Analysis Panel */}
-        <ResizablePanel defaultSize={35} minSize={25} maxSize={50} className="flex flex-col">
-          <div className="p-4 border-b border-gray-200 bg-white shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-                <Clipboard className="h-5 w-5 mr-2 text-[#2BAC3E]" />
-                Contract Analysis
-              </h2>
-              {pdfSessionId && (
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={extractContractRequirements}
-                    variant="outline"
-                    size="sm"
-                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                    disabled={isExtractingCodes}
-                  >
-                    {isExtractingCodes ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Extracting...
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Requirements
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      // Copy codes to clipboard
-                      navigator.clipboard.writeText(contractCodes);
-                      toast({
-                        title: "Copied to Clipboard",
-                        description: "Contract codes have been copied to your clipboard.",
-                        variant: "default",
-                      });
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="text-[#2BAC3E] border-[#2BAC3E] hover:bg-[#2BAC3E]/10"
-                  >
-                    <Clipboard className="h-4 w-4 mr-2" />
-                    Copy Codes
-                  </Button>
-                </div>
-              )}
+        <ResizablePanel defaultSize={35} minSize={25} maxSize={50} className="flex flex-col h-full">
+          <div className="flex flex-col h-full">
+            <div className="p-4 border-b border-gray-200 bg-white shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <Clipboard className="h-5 w-5 mr-2 text-[#2BAC3E]" />
+                  Contract Analysis
+                </h2>
+                {pdfSessionId && (
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={extractContractRequirements}
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                      disabled={isExtractingCodes}
+                    >
+                      {isExtractingCodes ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Extracting...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Requirements
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        // Copy codes to clipboard
+                        navigator.clipboard.writeText(contractCodes);
+                        toast({
+                          title: "Copied to Clipboard",
+                          description: "Contract codes have been copied to your clipboard.",
+                          variant: "default",
+                        });
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="text-[#2BAC3E] border-[#2BAC3E] hover:bg-[#2BAC3E]/10"
+                    >
+                      <Clipboard className="h-4 w-4 mr-2" />
+                      Copy Codes
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
             
             {/* Content area - changes based on selected tab */}
@@ -726,7 +760,7 @@ export default function ReadPDFPage() {
               ) : pdfSessionId ? (
                 <Tabs
                   defaultValue="chat"
-                  className="h-full w-full"
+                  className="h-full w-full flex flex-col"
                   onValueChange={(value) => setActiveTab(value as TabType)}
                 >
                   <div className="flex justify-between items-center px-4 py-2 border-b">
@@ -751,64 +785,66 @@ export default function ReadPDFPage() {
                   </div>
                   
                   {/* Add TabsContent components for each tab */}
-                  <TabsContent value="chat" className="h-full flex flex-col">
-                    <ScrollArea className="flex-1 p-4 h-full overflow-y-auto">
-                      <div className="space-y-4 min-h-full">
-                        <AnimatePresence mode="wait">
-                          {messages.length === 0 ? (
-                            <motion.div
-                              key="ask-prompt"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              className="flex flex-col items-center justify-center h-64 text-center"
-                            >
-                              <FileText className="h-12 w-12 text-[#2BAC3E]/30 mb-4" />
-                              <p className="text-gray-500 max-w-xs">
-                                {isProcessing ? "Processing document..." : "Ask questions about the contract document"}
-                              </p>
-                            </motion.div>
-                          ) : (
-                            messages.map((message) => (
+                  <TabsContent value="chat" className="flex flex-col flex-1">
+                    <div className="flex-1 overflow-hidden relative">
+                      <ScrollArea className="h-full" type="auto">
+                        <div className="space-y-4 p-4">
+                          <AnimatePresence mode="wait">
+                            {messages.length === 0 ? (
                               <motion.div
-                                key={message.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                                key="ask-prompt"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col items-center justify-center h-64 text-center"
                               >
-                                <div 
-                                  className={`max-w-[90%] rounded-lg p-3 ${
-                                    message.role === "user" 
-                                      ? "bg-[#2BAC3E] text-white" 
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                <FileText className="h-12 w-12 text-[#2BAC3E]/30 mb-4" />
+                                <p className="text-gray-500 max-w-xs">
+                                  {isProcessing ? "Processing document..." : "Ask questions about the contract document"}
+                                </p>
+                              </motion.div>
+                            ) : (
+                              messages.map((message) => (
+                                <motion.div
+                                  key={message.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                                 >
-                                  <div className="text-sm prose prose-sm max-w-none overflow-x-auto">
-                                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                                  <div 
+                                    className={`max-w-[90%] rounded-lg p-3 ${
+                                      message.role === "user" 
+                                        ? "bg-[#2BAC3E] text-white" 
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    <div className="text-sm prose prose-sm max-w-none overflow-x-auto">
+                                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                                    </div>
+                                    <p className="text-xs mt-1 opacity-70">
+                                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
                                   </div>
-                                  <p className="text-xs mt-1 opacity-70">
-                                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </p>
+                                </motion.div>
+                              ))
+                            )}
+                            {isLoading && (
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="flex justify-start"
+                              >
+                                <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-2">
+                                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                                  <p className="text-sm text-gray-500">Thinking...</p>
                                 </div>
                               </motion.div>
-                            ))
-                          )}
-                          {isLoading && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="flex justify-start"
-                            >
-                              <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-2">
-                                <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-                                <p className="text-sm text-gray-500">Thinking...</p>
-                              </div>
-                            </motion.div>
-                          )}
-                          <div ref={messagesEndRef} className="h-2 w-full" />
-                        </AnimatePresence>
-                      </div>
-                    </ScrollArea>
+                            )}
+                          </AnimatePresence>
+                          <div ref={messagesEndRef} className="h-10" />
+                        </div>
+                      </ScrollArea>
+                    </div>
                     
                     <div className="p-4 border-t border-gray-200 bg-white">
                       <div className="flex space-x-2">
@@ -840,224 +876,112 @@ export default function ReadPDFPage() {
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="summary" className="h-full overflow-auto">
-                    <ScrollArea className="h-full p-4">
-                      <Card className="mb-4">
-                        <CardHeader>
-                          <CardTitle className="text-lg">Contract Summary</CardTitle>
-                          <CardDescription>Key information extracted from the document</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="prose prose-sm max-w-none">
-                            <ReactMarkdown>{contractSummary}</ReactMarkdown>
-                          </div>
-                        </CardContent>
-                      </Card>
+                  <TabsContent value="summary" className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full" type="auto">
+                      <div className="p-4">
+                        <Card className="mb-4">
+                          <CardHeader>
+                            <CardTitle className="text-lg">Contract Summary</CardTitle>
+                            <CardDescription>Key information extracted from the document</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown>{contractSummary}</ReactMarkdown>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </ScrollArea>
                   </TabsContent>
                   
-                  <TabsContent value="codes" className="h-full overflow-auto">
-                    <ScrollArea className="h-full p-4">
-                      <Card className="mb-4">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <div>
-                            <CardTitle className="text-lg">Contract Codes & Regulations</CardTitle>
-                            <CardDescription>References to standards and regulations found in the document</CardDescription>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button
-                              onClick={() => {
-                                if (!contractCodes || contractCodes === "No FAR clauses or regulatory references found in the document.") {
-                                  toast({
-                                    title: "No Codes Available",
-                                    description: "Please extract FAR clauses first using the Extract Codes button.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                
-                                // Add a new message asking the AI to create a compliance matrix
-                                const userMessage: Message = {
-                                  id: Date.now().toString(),
-                                  content: "Create a compliance matrix table for all the FAR clauses you found, with columns for Clause Number, Title, Compliance Approach, and Implementation.",
-                                  role: "user",
-                                  timestamp: new Date()
-                                };
-                                
-                                setMessages(prev => [...prev, userMessage]);
-                                
-                                // Switch to chat tab
-                                setActiveTab("chat");
-                                
-                                // Fetch response from the AI
-                                setIsLoading(true);
-                                fetch(`${API_BASE_URL}/query`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({
-                                    session_id: pdfSessionId,
-                                    question: userMessage.content,
-                                    structured: false
-                                  }),
-                                })
-                                .then(response => {
-                                  if (!response.ok) throw new Error('Failed to create compliance matrix');
-                                  return response.json();
-                                })
-                                .then(data => {
-                                  const aiMessage: Message = {
-                                    id: Date.now().toString(),
-                                    content: data.answer,
-                                    role: "assistant",
-                                    timestamp: new Date()
-                                  };
-                                  setMessages(prev => [...prev, aiMessage]);
-                                })
-                                .catch(error => {
-                                  console.error('Error creating compliance matrix:', error);
-                                  const errorMessage: Message = {
-                                    id: Date.now().toString(),
-                                    content: "Sorry, I couldn't create a compliance matrix. Please try again.",
-                                    role: "assistant",
-                                    timestamp: new Date()
-                                  };
-                                  setMessages(prev => [...prev, errorMessage]);
-                                })
-                                .finally(() => {
-                                  setIsLoading(false);
-                                });
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"
-                            >
-                              <Clipboard className="h-4 w-4 mr-2" />
-                              Compliance Matrix
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setIsExtractingCodes(true);
-                                // Clear existing codes
-                                setContractCodes("Scanning for all FAR clauses and regulations...");
-                                
-                                // Call our new Scanner Agent endpoint
-                                fetch(`${API_BASE_URL}/extract_clauses`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                  body: JSON.stringify({
-                                    session_id: pdfSessionId
-                                  }),
-                                })
-                                .then(response => {
-                                  if (!response.ok) {
-                                    throw new Error('Failed to extract clauses with Scanner Agent');
-                                  }
-                                  return response.json();
-                                })
-                                .then(data => {
-                                  if (data.success && data.clause_inventory) {
-                                    setContractCodes(data.clause_inventory);
-                                    
-                                    // Find count info
-                                    const farCount = data.clauses?.far_clauses?.length || 0;
-                                    const dfarsCount = data.clauses?.dfars_clauses?.length || 0;
-                                    const altCount = data.clauses?.alternates?.length || 0;
-                                    const totalCount = farCount + dfarsCount + altCount;
-                                    
+                  <TabsContent value="codes" className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full" type="auto">
+                      <div className="p-4">
+                        <Card className="mb-4">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <div>
+                              <CardTitle className="text-lg">Contract Codes & Regulations</CardTitle>
+                              <CardDescription>References to standards and regulations found in the document</CardDescription>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                onClick={() => {
+                                  if (!contractCodes || contractCodes === "No FAR clauses or regulatory references found in the document.") {
                                     toast({
-                                      title: `${totalCount} Clauses Found`,
-                                      description: `Scanner Agent identified ${farCount} FAR clauses, ${dfarsCount} DFARS clauses, and ${altCount} alternates.`,
-                                      variant: "default",
+                                      title: "No Codes Available",
+                                      description: "Please extract FAR clauses first using the Extract Codes button.",
+                                      variant: "destructive",
                                     });
-                                    
-                                    // Add message about found clauses
-                                    if (totalCount > 0) {
-                                      const clauseMessage: Message = {
-                                        id: Date.now().toString(),
-                                        content: `📋 **Contract Clause Analysis Complete**\n\nI've identified ${totalCount} clauses in this document:\n- ${farCount} FAR clauses\n- ${dfarsCount} DFARS clauses\n- ${altCount} alternates\n\nYou can view the complete inventory in the Codes tab.`,
-                                        role: "assistant",
-                                        timestamp: new Date()
-                                      };
-                                      setMessages(prev => [...prev, clauseMessage]);
-                                    }
-                                  } else {
-                                    setContractCodes("No FAR clauses or regulatory references found in the document.");
+                                    return;
                                   }
-                                })
-                                .catch(error => {
-                                  console.error('Error extracting clauses with Scanner Agent:', error);
-                                  setContractCodes("Error extracting clauses. Falling back to LLM-based extraction...");
                                   
-                                  // Fallback to standard FAR clause extraction
-                                  fetch(`${API_BASE_URL}/extract_far_clauses`, {
+                                  // Add a new message asking the AI to create a compliance matrix
+                                  const userMessage: Message = {
+                                    id: Date.now().toString(),
+                                    content: "Create a compliance matrix table for all the FAR clauses you found, with columns for Clause Number, Title, Compliance Approach, and Implementation.",
+                                    role: "user",
+                                    timestamp: new Date()
+                                  };
+                                  
+                                  setMessages(prev => [...prev, userMessage]);
+                                  
+                                  // Switch to chat tab
+                                  setActiveTab("chat");
+                                  
+                                  // Fetch response from the AI
+                                  setIsLoading(true);
+                                  fetch(`${API_BASE_URL}/query`, {
                                     method: 'POST',
                                     headers: {
                                       'Content-Type': 'application/json',
                                     },
                                     body: JSON.stringify({
-                                      session_id: pdfSessionId
+                                      session_id: pdfSessionId,
+                                      question: userMessage.content,
+                                      structured: false
                                     }),
                                   })
-                                  .then(response => response.json())
-                                  .then(farData => {
-                                    if (farData.success && farData.far_clauses) {
-                                      setContractCodes(farData.far_clauses);
-                                    } else {
-                                      setContractCodes("Unable to extract clauses using either method.");
-                                    }
+                                  .then(response => {
+                                    if (!response.ok) throw new Error('Failed to create compliance matrix');
+                                    return response.json();
                                   })
-                                  .catch(() => {
-                                    setContractCodes("Failed to extract clauses. Please try again.");
+                                  .then(data => {
+                                    const aiMessage: Message = {
+                                      id: Date.now().toString(),
+                                      content: data.answer,
+                                      role: "assistant",
+                                      timestamp: new Date()
+                                    };
+                                    setMessages(prev => [...prev, aiMessage]);
+                                  })
+                                  .catch(error => {
+                                    console.error('Error creating compliance matrix:', error);
+                                    const errorMessage: Message = {
+                                      id: Date.now().toString(),
+                                      content: "Sorry, I couldn't create a compliance matrix. Please try again.",
+                                      role: "assistant",
+                                      timestamp: new Date()
+                                    };
+                                    setMessages(prev => [...prev, errorMessage]);
+                                  })
+                                  .finally(() => {
+                                    setIsLoading(false);
                                   });
-                                  
-                                  toast({
-                                    title: "Error",
-                                    description: "Scanner Agent extraction failed. Using fallback method.",
-                                    variant: "destructive",
-                                  });
-                                })
-                                .finally(() => {
-                                  setIsExtractingCodes(false);
-                                });
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="bg-[#2BAC3E]/10 hover:bg-[#2BAC3E]/20 text-[#2BAC3E]"
-                              disabled={isExtractingCodes}
-                            >
-                              {isExtractingCodes ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Scanning...
-                                </>
-                              ) : (
-                                <>
-                                  <Code className="h-4 w-4 mr-2" />
-                                  Scan All Clauses
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          {contractCodes ? (
-                            <div className="prose prose-sm max-w-none">
-                              <ReactMarkdown>{contractCodes}</ReactMarkdown>
-                            </div>
-                          ) : (
-                            <div className="py-8 text-center">
-                              <Code className="h-8 w-8 mx-auto mb-4 text-gray-300" />
-                              <p className="text-gray-500">No codes have been extracted yet</p>
-                              <Button 
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"
+                              >
+                                <Clipboard className="h-4 w-4 mr-2" />
+                                Compliance Matrix
+                              </Button>
+                              <Button
                                 onClick={() => {
-                                  // Same code as above button
                                   setIsExtractingCodes(true);
+                                  // Clear existing codes
                                   setContractCodes("Scanning for all FAR clauses and regulations...");
                                   
+                                  // Call our new Scanner Agent endpoint
                                   fetch(`${API_BASE_URL}/extract_clauses`, {
                                     method: 'POST',
                                     headers: {
@@ -1068,17 +992,37 @@ export default function ReadPDFPage() {
                                     }),
                                   })
                                   .then(response => {
-                                    if (!response.ok) throw new Error('Failed to extract clauses with Scanner Agent');
+                                    if (!response.ok) {
+                                      throw new Error('Failed to extract clauses with Scanner Agent');
+                                    }
                                     return response.json();
                                   })
                                   .then(data => {
                                     if (data.success && data.clause_inventory) {
                                       setContractCodes(data.clause_inventory);
+                                      
+                                      // Find count info
+                                      const farCount = data.clauses?.far_clauses?.length || 0;
+                                      const dfarsCount = data.clauses?.dfars_clauses?.length || 0;
+                                      const altCount = data.clauses?.alternates?.length || 0;
+                                      const totalCount = farCount + dfarsCount + altCount;
+                                      
                                       toast({
-                                        title: `${data.clauses?.far_clauses?.length || 0} Clauses Found`,
-                                        description: `Scanner Agent identified ${data.clauses?.far_clauses?.length || 0} FAR clauses.`,
+                                        title: `${totalCount} Clauses Found`,
+                                        description: `Scanner Agent identified ${farCount} FAR clauses, ${dfarsCount} DFARS clauses, and ${altCount} alternates.`,
                                         variant: "default",
                                       });
+                                      
+                                      // Add message about found clauses
+                                      if (totalCount > 0) {
+                                        const clauseMessage: Message = {
+                                          id: Date.now().toString(),
+                                          content: `📋 **Contract Clause Analysis Complete**\n\nI've identified ${totalCount} clauses in this document:\n- ${farCount} FAR clauses\n- ${dfarsCount} DFARS clauses\n- ${altCount} alternates\n\nYou can view the complete inventory in the Codes tab.`,
+                                          role: "assistant",
+                                          timestamp: new Date()
+                                        };
+                                        setMessages(prev => [...prev, clauseMessage]);
+                                      }
                                     } else {
                                       setContractCodes("No FAR clauses or regulatory references found in the document.");
                                     }
@@ -1121,7 +1065,7 @@ export default function ReadPDFPage() {
                                 }}
                                 variant="outline"
                                 size="sm"
-                                className="mt-4"
+                                className="bg-[#2BAC3E]/10 hover:bg-[#2BAC3E]/20 text-[#2BAC3E]"
                                 disabled={isExtractingCodes}
                               >
                                 {isExtractingCodes ? (
@@ -1137,277 +1081,375 @@ export default function ReadPDFPage() {
                                 )}
                               </Button>
                             </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                          </CardHeader>
+                          <CardContent>
+                            {contractCodes ? (
+                              <div className="prose prose-sm max-w-none">
+                                <ReactMarkdown>{contractCodes}</ReactMarkdown>
+                              </div>
+                            ) : (
+                              <div className="py-8 text-center">
+                                <Code className="h-8 w-8 mx-auto mb-4 text-gray-300" />
+                                <p className="text-gray-500">No codes have been extracted yet</p>
+                                <Button 
+                                  onClick={() => {
+                                    // Same code as above button
+                                    setIsExtractingCodes(true);
+                                    setContractCodes("Scanning for all FAR clauses and regulations...");
+                                    
+                                    fetch(`${API_BASE_URL}/extract_clauses`, {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        session_id: pdfSessionId
+                                      }),
+                                    })
+                                    .then(response => {
+                                      if (!response.ok) throw new Error('Failed to extract clauses with Scanner Agent');
+                                      return response.json();
+                                    })
+                                    .then(data => {
+                                      if (data.success && data.clause_inventory) {
+                                        setContractCodes(data.clause_inventory);
+                                        toast({
+                                          title: `${data.clauses?.far_clauses?.length || 0} Clauses Found`,
+                                          description: `Scanner Agent identified ${data.clauses?.far_clauses?.length || 0} FAR clauses.`,
+                                          variant: "default",
+                                        });
+                                      } else {
+                                        setContractCodes("No FAR clauses or regulatory references found in the document.");
+                                      }
+                                    })
+                                    .catch(error => {
+                                      console.error('Error extracting clauses with Scanner Agent:', error);
+                                      setContractCodes("Error extracting clauses. Falling back to LLM-based extraction...");
+                                      
+                                      // Fallback to standard FAR clause extraction
+                                      fetch(`${API_BASE_URL}/extract_far_clauses`, {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                          session_id: pdfSessionId
+                                        }),
+                                      })
+                                      .then(response => response.json())
+                                      .then(farData => {
+                                        if (farData.success && farData.far_clauses) {
+                                          setContractCodes(farData.far_clauses);
+                                        } else {
+                                          setContractCodes("Unable to extract clauses using either method.");
+                                        }
+                                      })
+                                      .catch(() => {
+                                        setContractCodes("Failed to extract clauses. Please try again.");
+                                      });
+                                      
+                                      toast({
+                                        title: "Error",
+                                        description: "Scanner Agent extraction failed. Using fallback method.",
+                                        variant: "destructive",
+                                      });
+                                    })
+                                    .finally(() => {
+                                      setIsExtractingCodes(false);
+                                    });
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-4"
+                                  disabled={isExtractingCodes}
+                                >
+                                  {isExtractingCodes ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      Scanning...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Code className="h-4 w-4 mr-2" />
+                                      Scan All Clauses
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
                     </ScrollArea>
                   </TabsContent>
                   
-                  <TabsContent value="solicitation" className="h-full overflow-auto">
-                    <div className="h-full p-4 overflow-auto">
-                      {!solicitationReport ? (
-                        <Card className="mx-auto max-w-4xl">
-                          <CardHeader>
-                            <CardTitle className="text-xl">Solicitation Analysis</CardTitle>
-                            <CardDescription>
-                              Click the "Analyze Solicitation" button to extract key information from 
-                              this RFP/RFQ document, including solicitation details, dates, evaluation 
-                              criteria, and submission requirements.
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="flex justify-center py-10">
-                            <Button
-                              onClick={analyzeSolicitation}
-                              disabled={isSolicitationAnalyzing || !pdfSessionId}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              <SearchCheck className="h-5 w-5 mr-2" />
-                              Analyze Solicitation
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ) : (
-                        <div className="space-y-4 max-w-4xl mx-auto">
-                          {solicitationDetails && (
-                            <Card className="bg-blue-50 border-blue-200">
-                              <CardHeader className="pb-2">
-                                <CardTitle className="text-lg text-blue-700 flex justify-between items-center">
-                                  <span>Solicitation Overview</span>
-                                  {!requirementsData && (
-                                    <Button
-                                      onClick={extractRequirements}
-                                      disabled={isExtractingRequirements}
-                                      variant="outline"
-                                      size="sm"
-                                      className="bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
-                                    >
-                                      {isExtractingRequirements ? (
-                                        <>
-                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                          Extracting...
-                                        </>
+                  <TabsContent value="solicitation" className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full" type="auto">
+                      <div className="p-4">
+                        {!solicitationReport ? (
+                          <Card className="mx-auto max-w-4xl">
+                            <CardHeader>
+                              <CardTitle className="text-xl">Solicitation Analysis</CardTitle>
+                              <CardDescription>
+                                Click the "Analyze Solicitation" button to extract key information from 
+                                this RFP/RFQ document, including solicitation details, dates, evaluation 
+                                criteria, and submission requirements.
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex justify-center py-10">
+                              <Button
+                                onClick={analyzeSolicitation}
+                                disabled={isSolicitationAnalyzing || !pdfSessionId}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <SearchCheck className="h-5 w-5 mr-2" />
+                                Analyze Solicitation
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <div className="space-y-4 max-w-4xl mx-auto">
+                            {solicitationDetails && (
+                              <Card className="bg-blue-50 border-blue-200">
+                                <CardHeader className="pb-2">
+                                  <CardTitle className="text-lg text-blue-700 flex justify-between items-center">
+                                    <span>Solicitation Overview</span>
+                                    {!requirementsData && (
+                                      <Button
+                                        onClick={extractRequirements}
+                                        disabled={isExtractingRequirements}
+                                        variant="outline"
+                                        size="sm"
+                                        className="bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+                                      >
+                                        {isExtractingRequirements ? (
+                                          <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Extracting...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <FileCheck className="h-4 w-4 mr-2" />
+                                            Extract Requirements
+                                          </>
+                                        )}
+                                      </Button>
+                                    )}
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <h4 className="text-sm font-medium text-blue-800">Basic Details</h4>
+                                      <dl className="mt-2 space-y-1">
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">Number:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.solicitation_number || 'Unknown'}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">Type:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.solicitation_type || 'Unknown'}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">NAICS:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.naics_code || 'Unknown'}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">Evaluation:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.evaluation_method || 'Unknown'}</dd>
+                                        </div>
+                                      </dl>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-sm font-medium text-blue-800">Metrics</h4>
+                                      <dl className="mt-2 space-y-1">
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">FAR Clauses:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.metrics?.total_far_clauses || 0}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">DFARS Clauses:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.metrics?.total_dfars_clauses || 0}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">Key 52.212 Clauses:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.metrics?.key_clauses_found || 0}</dd>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <dt className="text-sm text-blue-700">Due Date:</dt>
+                                          <dd className="text-sm font-medium">{solicitationDetails.response_due_date || 'Unknown'}</dd>
+                                        </div>
+                                      </dl>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                            
+                            {/* Add the requirements data display */}
+                            {requirementsData && (
+                              <Card className="border-green-200">
+                                <CardHeader className="pb-2 bg-green-50">
+                                  <CardTitle className="text-lg text-green-700">
+                                    Detailed Requirements
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                  <Tabs defaultValue="scope">
+                                    <TabsList className="w-full rounded-none border-b bg-transparent">
+                                      <TabsTrigger value="scope" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-green-600">
+                                        Scope of Work
+                                      </TabsTrigger>
+                                      <TabsTrigger value="evaluation" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-green-600">
+                                        Evaluation Criteria
+                                      </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="scope" className="p-4">
+                                      {requirementsData.scope_of_work?.error ? (
+                                        <div className="text-red-500">Error extracting scope: {requirementsData.scope_of_work.error}</div>
                                       ) : (
-                                        <>
-                                          <FileCheck className="h-4 w-4 mr-2" />
-                                          Extract Requirements
-                                        </>
+                                        <div className="space-y-6">
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Primary Requirements</h3>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                              {requirementsData.scope_of_work?.primary_requirements?.map((req: string, i: number) => (
+                                                <li key={i}>{req}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Deliverables</h3>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                              {requirementsData.scope_of_work?.deliverables?.map((del: string, i: number) => (
+                                                <li key={i}>{del}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Frequency Requirements</h3>
+                                            {requirementsData.scope_of_work?.frequency && (
+                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {Object.entries(requirementsData.scope_of_work.frequency).map(([period, tasks]: [string, any]) => (
+                                                  tasks && tasks.length > 0 ? (
+                                                    <div key={period} className="border rounded p-3">
+                                                      <h4 className="font-medium capitalize mb-2">{period}</h4>
+                                                      <ul className="list-disc pl-5 space-y-1">
+                                                        {tasks.map((task: string, i: number) => (
+                                                          <li key={i}>{task}</li>
+                                                        ))}
+                                                      </ul>
+                                                    </div>
+                                                  ) : null
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Compliance Requirements</h3>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                              {requirementsData.scope_of_work?.compliance?.map((req: string, i: number) => (
+                                                <li key={i}>{req}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        </div>
                                       )}
-                                    </Button>
-                                  )}
+                                    </TabsContent>
+                                    <TabsContent value="evaluation" className="p-4">
+                                      {requirementsData.evaluation_criteria?.error ? (
+                                        <div className="text-red-500">Error extracting evaluation criteria: {requirementsData.evaluation_criteria.error}</div>
+                                      ) : (
+                                        <div className="space-y-6">
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Evaluation Method</h3>
+                                            <p className="font-medium text-blue-700">{requirementsData.evaluation_criteria?.evaluation_method || "Not specified"}</p>
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Technical Factors</h3>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                              {requirementsData.evaluation_criteria?.technical_factors?.map((factor: string, i: number) => (
+                                                <li key={i}>{factor}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Past Performance Evaluation</h3>
+                                            <div className="border rounded p-3">
+                                              {typeof requirementsData.evaluation_criteria?.past_performance === 'string' ? (
+                                                <p>{requirementsData.evaluation_criteria?.past_performance}</p>
+                                              ) : (
+                                                <pre className="text-sm whitespace-pre-wrap">
+                                                  {JSON.stringify(requirementsData.evaluation_criteria?.past_performance, null, 2)}
+                                                </pre>
+                                              )}
+                                            </div>
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Price Evaluation</h3>
+                                            <p>{requirementsData.evaluation_criteria?.price_evaluation || "Not specified"}</p>
+                                          </div>
+                                          
+                                          <div>
+                                            <h3 className="text-lg font-medium mb-2">Minimum Requirements</h3>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                              {requirementsData.evaluation_criteria?.minimum_requirements?.map((req: string, i: number) => (
+                                                <li key={i}>{req}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </TabsContent>
+                                  </Tabs>
+                                </CardContent>
+                              </Card>
+                            )}
+                            
+                            {/* Detailed Analysis Card */}
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-lg flex justify-between">
+                                  <span>Detailed Analysis</span>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="h-8 text-blue-600"
+                                    onClick={() => {
+                                      // Copy to clipboard
+                                      navigator.clipboard.writeText(solicitationReport)
+                                        .then(() => {
+                                          toast({ title: "Copied to clipboard" })
+                                        })
+                                        .catch(err => {
+                                          console.error('Failed to copy: ', err);
+                                          toast({ 
+                                            title: "Failed to copy",
+                                            variant: "destructive"
+                                          })
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4 mr-1" />
+                                    Copy
+                                  </Button>
                                 </CardTitle>
                               </CardHeader>
                               <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <h4 className="text-sm font-medium text-blue-800">Basic Details</h4>
-                                    <dl className="mt-2 space-y-1">
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">Number:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.solicitation_number || 'Unknown'}</dd>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">Type:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.solicitation_type || 'Unknown'}</dd>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">NAICS:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.naics_code || 'Unknown'}</dd>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">Evaluation:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.evaluation_method || 'Unknown'}</dd>
-                                      </div>
-                                    </dl>
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-medium text-blue-800">Metrics</h4>
-                                    <dl className="mt-2 space-y-1">
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">FAR Clauses:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.metrics?.total_far_clauses || 0}</dd>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">DFARS Clauses:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.metrics?.total_dfars_clauses || 0}</dd>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">Key 52.212 Clauses:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.metrics?.key_clauses_found || 0}</dd>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <dt className="text-sm text-blue-700">Due Date:</dt>
-                                        <dd className="text-sm font-medium">{solicitationDetails.response_due_date || 'Unknown'}</dd>
-                                      </div>
-                                    </dl>
-                                  </div>
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{solicitationReport}</ReactMarkdown>
                                 </div>
                               </CardContent>
                             </Card>
-                          )}
-                          
-                          {/* Add the requirements data display */}
-                          {requirementsData && (
-                            <Card className="border-green-200">
-                              <CardHeader className="pb-2 bg-green-50">
-                                <CardTitle className="text-lg text-green-700">
-                                  Detailed Requirements
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent className="p-0">
-                                <Tabs defaultValue="scope">
-                                  <TabsList className="w-full rounded-none border-b bg-transparent">
-                                    <TabsTrigger value="scope" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-green-600">
-                                      Scope of Work
-                                    </TabsTrigger>
-                                    <TabsTrigger value="evaluation" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-green-600">
-                                      Evaluation Criteria
-                                    </TabsTrigger>
-                                  </TabsList>
-                                  <TabsContent value="scope" className="p-4">
-                                    {requirementsData.scope_of_work?.error ? (
-                                      <div className="text-red-500">Error extracting scope: {requirementsData.scope_of_work.error}</div>
-                                    ) : (
-                                      <div className="space-y-6">
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Primary Requirements</h3>
-                                          <ul className="list-disc pl-5 space-y-1">
-                                            {requirementsData.scope_of_work?.primary_requirements?.map((req: string, i: number) => (
-                                              <li key={i}>{req}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Deliverables</h3>
-                                          <ul className="list-disc pl-5 space-y-1">
-                                            {requirementsData.scope_of_work?.deliverables?.map((del: string, i: number) => (
-                                              <li key={i}>{del}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Frequency Requirements</h3>
-                                          {requirementsData.scope_of_work?.frequency && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                              {Object.entries(requirementsData.scope_of_work.frequency).map(([period, tasks]: [string, any]) => (
-                                                tasks && tasks.length > 0 ? (
-                                                  <div key={period} className="border rounded p-3">
-                                                    <h4 className="font-medium capitalize mb-2">{period}</h4>
-                                                    <ul className="list-disc pl-5 space-y-1">
-                                                      {tasks.map((task: string, i: number) => (
-                                                        <li key={i}>{task}</li>
-                                                      ))}
-                                                    </ul>
-                                                  </div>
-                                                ) : null
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Compliance Requirements</h3>
-                                          <ul className="list-disc pl-5 space-y-1">
-                                            {requirementsData.scope_of_work?.compliance?.map((req: string, i: number) => (
-                                              <li key={i}>{req}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </TabsContent>
-                                  <TabsContent value="evaluation" className="p-4">
-                                    {requirementsData.evaluation_criteria?.error ? (
-                                      <div className="text-red-500">Error extracting evaluation criteria: {requirementsData.evaluation_criteria.error}</div>
-                                    ) : (
-                                      <div className="space-y-6">
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Evaluation Method</h3>
-                                          <p className="font-medium text-blue-700">{requirementsData.evaluation_criteria?.evaluation_method || "Not specified"}</p>
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Technical Factors</h3>
-                                          <ul className="list-disc pl-5 space-y-1">
-                                            {requirementsData.evaluation_criteria?.technical_factors?.map((factor: string, i: number) => (
-                                              <li key={i}>{factor}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Past Performance Evaluation</h3>
-                                          <div className="border rounded p-3">
-                                            {typeof requirementsData.evaluation_criteria?.past_performance === 'string' ? (
-                                              <p>{requirementsData.evaluation_criteria?.past_performance}</p>
-                                            ) : (
-                                              <pre className="text-sm whitespace-pre-wrap">
-                                                {JSON.stringify(requirementsData.evaluation_criteria?.past_performance, null, 2)}
-                                              </pre>
-                                            )}
-                                          </div>
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Price Evaluation</h3>
-                                          <p>{requirementsData.evaluation_criteria?.price_evaluation || "Not specified"}</p>
-                                        </div>
-                                        
-                                        <div>
-                                          <h3 className="text-lg font-medium mb-2">Minimum Requirements</h3>
-                                          <ul className="list-disc pl-5 space-y-1">
-                                            {requirementsData.evaluation_criteria?.minimum_requirements?.map((req: string, i: number) => (
-                                              <li key={i}>{req}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </TabsContent>
-                                </Tabs>
-                              </CardContent>
-                            </Card>
-                          )}
-                          
-                          {/* Detailed Analysis Card */}
-                          <Card>
-                            <CardHeader className="pb-2">
-                              <CardTitle className="text-lg flex justify-between">
-                                <span>Detailed Analysis</span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="h-8 text-blue-600"
-                                  onClick={() => {
-                                    // Copy to clipboard
-                                    navigator.clipboard.writeText(solicitationReport)
-                                      .then(() => {
-                                        toast({ title: "Copied to clipboard" })
-                                      })
-                                      .catch(err => {
-                                        console.error('Failed to copy: ', err);
-                                        toast({ 
-                                          title: "Failed to copy",
-                                          variant: "destructive"
-                                        })
-                                      });
-                                  }}
-                                >
-                                  <Copy className="h-4 w-4 mr-1" />
-                                  Copy
-                                </Button>
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="prose prose-sm max-w-none">
-                                <ReactMarkdown>{solicitationReport}</ReactMarkdown>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      )}
-                    </div>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
                   </TabsContent>
                 </Tabs>
               ) : (
