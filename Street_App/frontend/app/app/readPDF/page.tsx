@@ -524,10 +524,10 @@ export default function ReadPDFPage() {
 
   // Add this new function to generate a proposal
   const generateProposal = async () => {
-    if (!pdfSessionId || !requirementsData) {
+    if (!pdfSessionId) {
       toast({
-        title: "Requirements Needed",
-        description: "Please extract detailed requirements first.",
+        title: "Upload Required",
+        description: "Please upload a document first.",
         variant: "destructive",
       });
       return;
@@ -535,6 +535,20 @@ export default function ReadPDFPage() {
 
     setIsGeneratingProposal(true);
     setActiveTab("proposal");
+
+    // Add status message
+    const processingMessage: Message = {
+      id: Date.now().toString(),
+      content: `🔄 **Processing Document for Proposal Generation**\n\nI'm now analyzing your document and extracting all necessary information to create a complete proposal. This process includes:\n\n1. Solicitation analysis\n2. FAR clause identification\n3. Requirements extraction\n4. Proposal content generation\n\nThis may take a minute or two. I'll notify you when your proposal is ready.`,
+      role: "assistant",
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, processingMessage]);
+
+    toast({
+      title: "Auto-Processing Document",
+      description: "Analyzing document and creating proposal...",
+    });
 
     try {
       const response = await fetch(`${API_BASE_URL}/generate_proposal`, {
@@ -554,6 +568,17 @@ export default function ReadPDFPage() {
       const data = await response.json();
       
       if (data.success) {
+        // Store requirements data if it was generated in the process
+        if (!requirementsData && data.requirements) {
+          setRequirementsData(data.requirements);
+        }
+        
+        // Store solicitation report if it was generated in the process
+        if (!solicitationReport && data.solicitation_analysis) {
+          setSolicitationReport(data.solicitation_analysis.formatted_report);
+          setSolicitationDetails(data.solicitation_analysis.solicitation_details);
+        }
+        
         setProposalData(data.proposal);
         
         // Add message about completed proposal generation
@@ -567,7 +592,7 @@ export default function ReadPDFPage() {
 
         toast({
           title: "Proposal Generated",
-          description: "Successfully generated proposal content based on requirements",
+          description: "Successfully generated proposal content based on document analysis",
         });
       } else {
         toast({
@@ -812,6 +837,25 @@ export default function ReadPDFPage() {
                       <Clipboard className="h-4 w-4 mr-2" />
                       Copy Codes
                     </Button>
+                    <Button
+                      onClick={generateProposal}
+                      variant="outline"
+                      size="sm"
+                      className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                      disabled={isGeneratingProposal}
+                    >
+                      {isGeneratingProposal ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <FileOutput className="h-4 w-4 mr-2" />
+                          Generate Proposal
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </div>
@@ -916,19 +960,17 @@ export default function ReadPDFPage() {
                           Analysis
                         </button>
                       )}
-                      {requirementsData && (
-                        <button
-                          onClick={() => setActiveTab("proposal")}
-                          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                            activeTab === "proposal"
-                              ? "bg-gray-100 text-gray-900"
-                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
-                        >
-                          <FileOutput className="h-4 w-4 mr-2" />
-                          Proposal
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setActiveTab("proposal")}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          activeTab === "proposal"
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
+                        <FileOutput className="h-4 w-4 mr-2" />
+                        Proposal
+                      </button>
                     </div>
                   </div>
                   
@@ -1016,7 +1058,7 @@ export default function ReadPDFPage() {
                               className="bg-[#2BAC3E] hover:bg-[#1F8A2F] text-white"
                             >
                               {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-4 animate-spin" />
                               ) : (
                                 <Send className="h-4 w-4" />
                               )}
@@ -1713,30 +1755,59 @@ export default function ReadPDFPage() {
                         {!proposalData ? (
                           <Card className="mx-auto max-w-4xl">
                             <CardHeader>
-                              <CardTitle className="text-xl">Generate Proposal</CardTitle>
+                              <CardTitle className="text-xl">Smart Proposal Generator</CardTitle>
                               <CardDescription>
-                                Click the "Generate Proposal" button to create a comprehensive proposal draft 
-                                based on the solicitation analysis and extracted requirements.
+                                Our AI proposal generator will automatically analyze your document, extract requirements, 
+                                and create a comprehensive proposal draft. All steps are handled for you in one click.
                               </CardDescription>
                             </CardHeader>
-                            <CardContent className="flex justify-center py-10">
-                              <Button
-                                onClick={generateProposal}
-                                disabled={isGeneratingProposal || !requirementsData}
-                                className="bg-purple-600 hover:bg-purple-700"
-                              >
-                                {isGeneratingProposal ? (
-                                  <>
-                                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                                    Generating...
-                                  </>
-                                ) : (
-                                  <>
-                                    <FileOutput className="h-5 w-5 mr-2" />
-                                    Generate Proposal
-                                  </>
-                                )}
-                              </Button>
+                            <CardContent>
+                              <div className="mb-6">
+                                <h3 className="text-sm font-medium mb-2">Automated Workflow:</h3>
+                                <ol className="list-decimal pl-5 space-y-1 text-sm text-gray-600">
+                                  <li>Document analysis and solicitation identification</li>
+                                  <li>FAR clause extraction and compliance requirements</li>
+                                  <li>Detailed requirements extraction</li>
+                                  <li>Proposal structure generation with minimum requirements</li>
+                                  <li>Content generation for all proposal sections</li>
+                                </ol>
+                              </div>
+                              <div className="flex justify-center py-4">
+                                <Button
+                                  onClick={generateProposal}
+                                  disabled={isGeneratingProposal || !pdfSessionId}
+                                  className="bg-purple-600 hover:bg-purple-700"
+                                >
+                                  {isGeneratingProposal ? (
+                                    <>
+                                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                      Generating Proposal...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FileOutput className="h-5 w-5 mr-2" />
+                                      Generate Complete Proposal
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                              {isGeneratingProposal && (
+                                <div className="mt-6 border rounded-md p-4 bg-gray-50">
+                                  <h4 className="text-sm font-medium mb-2 flex items-center">
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin text-purple-600" />
+                                    Processing Document
+                                  </h4>
+                                  <div className="space-y-3">
+                                    <div>
+                                      <div className="flex justify-between text-xs mb-1">
+                                        <span>Analyzing document structure</span>
+                                        <span>Step 1 of 5</span>
+                                      </div>
+                                      <Progress value={20} className="h-1" />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         ) : (
