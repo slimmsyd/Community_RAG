@@ -226,6 +226,10 @@ export default function ReadPDFPage() {
       const data = await response.json();
       
       // Create a formatted requirements message
+      // Store the extracted requirements data first
+      setRequirementsData(data);
+      
+      // Format the requirements for display in chat
       let requirementsText = "# Detailed Contract Requirements\n\n";
       
       if (data.far_clauses) {
@@ -257,6 +261,7 @@ export default function ReadPDFPage() {
       };
       
       setMessages(prev => [...prev, requirementsMessage]);
+
       
       // Switch to chat tab to show the results
       setActiveTab("chat");
@@ -482,6 +487,8 @@ export default function ReadPDFPage() {
       
       if (data.success && data.requirements) {
         setRequirementsData(data.requirements);
+
+        console.log("Loggin the data requriments", data.requirements)
         
         // Add message about extracted requirements
         const reqMessage: Message = {
@@ -552,7 +559,7 @@ export default function ReadPDFPage() {
         // Add message about completed proposal generation
         const proposalMessage: Message = {
           id: Date.now().toString(),
-          content: `📝 **Proposal Draft Generated**\n\nI've created a draft proposal based on the solicitation requirements including:\n- **Minimum Required Elements** (critical compliance items)\n- Executive Summary\n- Technical Approach\n- Past Performance References\n- Pricing Structure\n\nYou can view and edit these sections in the Proposal tab.`,
+          content: `📝 **Proposal Draft Generated**\n\nI've created a comprehensive proposal package based on the solicitation requirements including:\n\n- **Minimum Required Elements** (critical compliance items)\n- **FAR Clause Compliance Guide** (explaining each clause's requirements)\n- **Strategic Proposal Approach** (win themes and discriminators)\n- Executive Summary\n- Technical Approach\n- Past Performance References\n- Pricing Structure\n- **Table of Contents** with proper government proposal structure\n\nYou can view and edit these sections in the Proposal tab.`,
           role: "assistant",
           timestamp: new Date()
         };
@@ -580,6 +587,10 @@ export default function ReadPDFPage() {
       setIsGeneratingProposal(false);
     }
   };
+
+  useEffect(() => {
+    console.log("requirements data", requirementsData)
+  }, [requirementsData])
 
   useEffect(() => {
    
@@ -1770,6 +1781,86 @@ export default function ReadPDFPage() {
                               </CardContent>
                             </Card>
                             
+                            {/* FAR Clause Explanations Card */}
+                            <Card className="border-blue-200">
+                              <CardHeader className="bg-blue-50">
+                                <CardTitle className="text-lg text-blue-700 flex justify-between items-center">
+                                  <span>FAR Clause Compliance Guide</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.far_explanations || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "FAR compliance guide copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                                <CardDescription className="text-blue-600">
+                                  Detailed explanation of each FAR clause and requirements for compliance in your proposal.
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.far_explanations || "No FAR clauses identified."}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Integrated Proposal Insights Card */}
+                            <Card className="border-emerald-200">
+                              <CardHeader className="bg-emerald-50">
+                                <CardTitle className="text-lg text-emerald-700 flex justify-between items-center">
+                                  <span>Strategic Proposal Approach</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.integrated_insights || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Strategic approach copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                                <CardDescription className="text-emerald-600">
+                                  Comprehensive strategy with win themes and competitive discriminators based on all solicitation components.
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.integrated_insights || "No strategic insights available."}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
                             {/* Executive Summary Card */}
                             <Card className="border-purple-200">
                               <CardHeader className="bg-purple-50">
@@ -1914,6 +2005,46 @@ export default function ReadPDFPage() {
                               <CardContent className="pt-4">
                                 <div className="prose prose-sm max-w-none">
                                   <ReactMarkdown>{proposalData.pricing_guidance || ""}</ReactMarkdown>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            {/* Table of Contents Card - Bottom of the proposal */}
+                            <Card className="border-slate-300 bg-slate-50">
+                              <CardHeader className="bg-slate-100">
+                                <CardTitle className="text-lg text-slate-800 flex justify-between items-center">
+                                  <span>Table of Contents</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(proposalData.table_of_contents || "")
+                                        .then(() => {
+                                          toast({
+                                            title: "Copied!",
+                                            description: "Table of contents copied to clipboard",
+                                          });
+                                        })
+                                        .catch(() => {
+                                          toast({
+                                            title: "Failed to copy",
+                                            description: "Could not copy to clipboard",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </CardTitle>
+                                <CardDescription>
+                                  Complete structured outline with section numbering for the final proposal document
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="pt-4">
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown>{proposalData.table_of_contents || ""}</ReactMarkdown>
                                 </div>
                               </CardContent>
                             </Card>
