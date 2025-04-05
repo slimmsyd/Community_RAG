@@ -1,49 +1,52 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { nanoid } from "nanoid";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
+import {
+  FileText,
+  Send,
+  Loader2,
+  MessageSquare,
+  FileSearch,
+  Code,
+  FileCheck,
+  SearchCheck,
+  Copy,
+  ListChecks
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { 
   ResizableHandle, 
   ResizablePanel, 
   ResizablePanelGroup 
 } from "@/components/ui/resizable";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription,
-  CardFooter
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { useSession } from "next-auth/react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { 
-  Send, 
   Upload, 
-  FileText, 
-  MessageSquare, 
   ChevronLeft, 
   ChevronRight,
-  Loader2,
   AlertCircle,
   X,
-  Code,
-  File,
-  BookOpen,
-  Clipboard,
-  FileCheck,
-  SearchCheck,
-  Copy
+  Clipboard
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { PDFIcon } from "@/components/icons/PDFIcon";
-import { useToast } from "@/components/ui/use-toast";
-import ReactMarkdown from 'react-markdown';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Define the Flask API base URL
 const API_BASE_URL =  "http://127.0.0.1:5002";
@@ -56,7 +59,7 @@ interface Message {
   timestamp: Date;
 }
 
-type TabType = "chat" | "summary" | "codes" | "solicitation";
+type TabType = "chat" | "summary" | "codes" | "solicitation" | "requirements" | "analysis";
 
 export default function ReadPDFPage() {
   const router = useRouter();
@@ -758,127 +761,179 @@ export default function ReadPDFPage() {
                   </motion.div>
                 </div>
               ) : pdfSessionId ? (
-                <Tabs
-                  defaultValue="chat"
-                  className="h-full w-full flex flex-col"
-                  onValueChange={(value) => setActiveTab(value as TabType)}
-                >
+                <div className="h-full w-full flex flex-col">
                   <div className="flex justify-between items-center px-4 py-2 border-b">
-                    <TabsList>
-                      <TabsTrigger value="chat">
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => setActiveTab("chat")}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          activeTab === "chat"
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Chat
-                      </TabsTrigger>
-                      <TabsTrigger value="summary">
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("summary")}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          activeTab === "summary"
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
                         <FileText className="h-4 w-4 mr-2" />
                         Summary
-                      </TabsTrigger>
-                      <TabsTrigger value="codes">
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("codes")}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          activeTab === "codes"
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
                         <Code className="h-4 w-4 mr-2" />
                         Codes
-                      </TabsTrigger>
-                      <TabsTrigger value="solicitation">
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("solicitation")}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          activeTab === "solicitation"
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        }`}
+                      >
                         <SearchCheck className="h-4 w-4 mr-2" />
                         Solicitation
-                      </TabsTrigger>
-                    </TabsList>
+                      </button>
+                      {requirementsData && (
+                        <button
+                          onClick={() => setActiveTab("requirements")}
+                          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === "requirements"
+                              ? "bg-gray-100 text-gray-900"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                        >
+                          <ListChecks className="h-4 w-4 mr-2" />
+                          Requirements
+                        </button>
+                      )}
+                      {solicitationReport && (
+                        <button
+                          onClick={() => setActiveTab("analysis")}
+                          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === "analysis"
+                              ? "bg-gray-100 text-gray-900"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                          }`}
+                        >
+                          <FileSearch className="h-4 w-4 mr-2" />
+                          Analysis
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
-                  {/* Add TabsContent components for each tab */}
-                  <TabsContent value="chat" className="flex flex-col flex-1">
-                    <div className="flex-1 overflow-hidden relative">
-                      <ScrollArea className="h-full" type="auto">
-                        <div className="space-y-4 p-4">
-                          <AnimatePresence mode="wait">
-                            {messages.length === 0 ? (
-                              <motion.div
-                                key="ask-prompt"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex flex-col items-center justify-center h-64 text-center"
-                              >
-                                <FileText className="h-12 w-12 text-[#2BAC3E]/30 mb-4" />
-                                <p className="text-gray-500 max-w-xs">
-                                  {isProcessing ? "Processing document..." : "Ask questions about the contract document"}
-                                </p>
-                              </motion.div>
-                            ) : (
-                              messages.map((message) => (
+                  {/* Content area based on active tab */}
+                  <div className="flex-1 overflow-hidden">
+                    {/* Chat Tab */}
+                    {activeTab === "chat" && (
+                      <div className="flex flex-col h-full">
+                        <div className="flex-1 overflow-y-auto p-4">
+                          <div className="space-y-4">
+                            <AnimatePresence mode="wait">
+                              {messages.length === 0 ? (
                                 <motion.div
-                                  key={message.id}
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                                  key="ask-prompt"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="flex flex-col items-center justify-center h-64 text-center"
                                 >
-                                  <div 
-                                    className={`max-w-[90%] rounded-lg p-3 ${
-                                      message.role === "user" 
-                                        ? "bg-[#2BAC3E] text-white" 
-                                        : "bg-gray-100 text-gray-800"
-                                    }`}
+                                  <FileText className="h-12 w-12 text-[#2BAC3E]/30 mb-4" />
+                                  <p className="text-gray-500 max-w-xs">
+                                    {isProcessing ? "Processing document..." : "Ask questions about the contract document"}
+                                  </p>
+                                </motion.div>
+                              ) : (
+                                messages.map((message) => (
+                                  <motion.div
+                                    key={message.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                                   >
-                                    <div className="text-sm prose prose-sm max-w-none overflow-x-auto">
-                                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                                    <div 
+                                      className={`max-w-[90%] rounded-lg p-3 ${
+                                        message.role === "user" 
+                                          ? "bg-[#2BAC3E] text-white" 
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                    >
+                                      <div className="text-sm prose prose-sm max-w-none overflow-x-auto">
+                                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                                      </div>
+                                      <p className="text-xs mt-1 opacity-70">
+                                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </p>
                                     </div>
-                                    <p className="text-xs mt-1 opacity-70">
-                                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
+                                  </motion.div>
+                                ))
+                              )}
+                              {isLoading && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  className="flex justify-start"
+                                >
+                                  <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-2">
+                                    <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                                    <p className="text-sm text-gray-500">Thinking...</p>
                                   </div>
                                 </motion.div>
-                              ))
-                            )}
-                            {isLoading && (
-                              <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="flex justify-start"
-                              >
-                                <div className="bg-gray-100 rounded-lg p-3 flex items-center space-x-2">
-                                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-                                  <p className="text-sm text-gray-500">Thinking...</p>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                          <div ref={messagesEndRef} className="h-10" />
+                              )}
+                            </AnimatePresence>
+                            <div ref={messagesEndRef} className="h-10" />
+                          </div>
                         </div>
-                      </ScrollArea>
-                    </div>
-                    
-                    <div className="p-4 border-t border-gray-200 bg-white">
-                      <div className="flex space-x-2">
-                        <Input
-                          value={inputMessage}
-                          onChange={(e) => setInputMessage(e.target.value)}
-                          placeholder={pdfSessionId ? "Ask a question about the contract..." : isProcessing ? "Processing document..." : "Upload a contract document first"}
-                          disabled={!pdfSessionId || isLoading || isProcessing}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                          className="flex-1 border-gray-300 focus:ring-[#2BAC3E] focus:border-[#2BAC3E]"
-                        />
-                        <Button
-                          onClick={handleSendMessage}
-                          disabled={!pdfSessionId || !inputMessage.trim() || isLoading || isProcessing}
-                          className="bg-[#2BAC3E] hover:bg-[#1F8A2F] text-white"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4" />
-                          )}
-                        </Button>
+                        
+                        <div className="p-4 border-t border-gray-200 bg-white">
+                          <div className="flex space-x-2">
+                            <Input
+                              value={inputMessage}
+                              onChange={(e) => setInputMessage(e.target.value)}
+                              placeholder={pdfSessionId ? "Ask a question about the contract..." : isProcessing ? "Processing document..." : "Upload a contract document first"}
+                              disabled={!pdfSessionId || isLoading || isProcessing}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendMessage();
+                                }
+                              }}
+                              className="flex-1 border-gray-300 focus:ring-[#2BAC3E] focus:border-[#2BAC3E]"
+                            />
+                            <Button
+                              onClick={handleSendMessage}
+                              disabled={!pdfSessionId || !inputMessage.trim() || isLoading || isProcessing}
+                              className="bg-[#2BAC3E] hover:bg-[#1F8A2F] text-white"
+                            >
+                              {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="summary" className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-full" type="auto">
-                      <div className="p-4">
+                    )}
+                    
+                    {/* Summary Tab */}
+                    {activeTab === "summary" && (
+                      <div className="h-full overflow-y-auto p-4">
                         <Card className="mb-4">
                           <CardHeader>
                             <CardTitle className="text-lg">Contract Summary</CardTitle>
@@ -891,12 +946,11 @@ export default function ReadPDFPage() {
                           </CardContent>
                         </Card>
                       </div>
-                    </ScrollArea>
-                  </TabsContent>
-                  
-                  <TabsContent value="codes" className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-full" type="auto">
-                      <div className="p-4">
+                    )}
+                    
+                    {/* Codes Tab */}
+                    {activeTab === "codes" && (
+                      <div className="h-full overflow-y-auto p-4">
                         <Card className="mb-4">
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
@@ -1180,12 +1234,11 @@ export default function ReadPDFPage() {
                           </CardContent>
                         </Card>
                       </div>
-                    </ScrollArea>
-                  </TabsContent>
-                  
-                  <TabsContent value="solicitation" className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-full" type="auto">
-                      <div className="p-4">
+                    )}
+                    
+                    {/* Solicitation Tab */}
+                    {activeTab === "solicitation" && (
+                      <div className="h-full overflow-y-auto p-4">
                         {!solicitationReport ? (
                           <Card className="mx-auto max-w-4xl">
                             <CardHeader>
@@ -1295,118 +1348,19 @@ export default function ReadPDFPage() {
                                   </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-0">
-                                  <Tabs defaultValue="scope">
-                                    <TabsList className="w-full rounded-none border-b bg-transparent">
-                                      <TabsTrigger value="scope" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-green-600">
-                                        Scope of Work
-                                      </TabsTrigger>
-                                      <TabsTrigger value="evaluation" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-green-600">
-                                        Evaluation Criteria
-                                      </TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="scope" className="p-4">
-                                      {requirementsData.scope_of_work?.error ? (
-                                        <div className="text-red-500">Error extracting scope: {requirementsData.scope_of_work.error}</div>
-                                      ) : (
-                                        <div className="space-y-6">
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Primary Requirements</h3>
-                                            <ul className="list-disc pl-5 space-y-1">
-                                              {requirementsData.scope_of_work?.primary_requirements?.map((req: string, i: number) => (
-                                                <li key={i}>{req}</li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Deliverables</h3>
-                                            <ul className="list-disc pl-5 space-y-1">
-                                              {requirementsData.scope_of_work?.deliverables?.map((del: string, i: number) => (
-                                                <li key={i}>{del}</li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Frequency Requirements</h3>
-                                            {requirementsData.scope_of_work?.frequency && (
-                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {Object.entries(requirementsData.scope_of_work.frequency).map(([period, tasks]: [string, any]) => (
-                                                  tasks && tasks.length > 0 ? (
-                                                    <div key={period} className="border rounded p-3">
-                                                      <h4 className="font-medium capitalize mb-2">{period}</h4>
-                                                      <ul className="list-disc pl-5 space-y-1">
-                                                        {tasks.map((task: string, i: number) => (
-                                                          <li key={i}>{task}</li>
-                                                        ))}
-                                                      </ul>
-                                                    </div>
-                                                  ) : null
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Compliance Requirements</h3>
-                                            <ul className="list-disc pl-5 space-y-1">
-                                              {requirementsData.scope_of_work?.compliance?.map((req: string, i: number) => (
-                                                <li key={i}>{req}</li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </TabsContent>
-                                    <TabsContent value="evaluation" className="p-4">
-                                      {requirementsData.evaluation_criteria?.error ? (
-                                        <div className="text-red-500">Error extracting evaluation criteria: {requirementsData.evaluation_criteria.error}</div>
-                                      ) : (
-                                        <div className="space-y-6">
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Evaluation Method</h3>
-                                            <p className="font-medium text-blue-700">{requirementsData.evaluation_criteria?.evaluation_method || "Not specified"}</p>
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Technical Factors</h3>
-                                            <ul className="list-disc pl-5 space-y-1">
-                                              {requirementsData.evaluation_criteria?.technical_factors?.map((factor: string, i: number) => (
-                                                <li key={i}>{factor}</li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Past Performance Evaluation</h3>
-                                            <div className="border rounded p-3">
-                                              {typeof requirementsData.evaluation_criteria?.past_performance === 'string' ? (
-                                                <p>{requirementsData.evaluation_criteria?.past_performance}</p>
-                                              ) : (
-                                                <pre className="text-sm whitespace-pre-wrap">
-                                                  {JSON.stringify(requirementsData.evaluation_criteria?.past_performance, null, 2)}
-                                                </pre>
-                                              )}
-                                            </div>
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Price Evaluation</h3>
-                                            <p>{requirementsData.evaluation_criteria?.price_evaluation || "Not specified"}</p>
-                                          </div>
-                                          
-                                          <div>
-                                            <h3 className="text-lg font-medium mb-2">Minimum Requirements</h3>
-                                            <ul className="list-disc pl-5 space-y-1">
-                                              {requirementsData.evaluation_criteria?.minimum_requirements?.map((req: string, i: number) => (
-                                                <li key={i}>{req}</li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </TabsContent>
-                                  </Tabs>
+                                  <div className="w-full">
+                                    <div className="flex border-b">
+                                      <button 
+                                        onClick={() => setActiveTab("requirements")}
+                                        className="px-4 py-2 text-sm font-medium border-b-2 border-green-600 text-green-700"
+                                      >
+                                        View Requirements
+                                      </button>
+                                    </div>
+                                    <div className="p-4">
+                                      <p className="text-sm text-gray-600">Click the tab above to view detailed requirements extracted from this solicitation.</p>
+                                    </div>
+                                  </div>
                                 </CardContent>
                               </Card>
                             )}
@@ -1449,9 +1403,216 @@ export default function ReadPDFPage() {
                           </div>
                         )}
                       </div>
-                    </ScrollArea>
-                  </TabsContent>
-                </Tabs>
+                    )}
+                    
+                    {/* Requirements Tab */}
+                    {activeTab === "requirements" && requirementsData && (
+                      <div className="h-full overflow-y-auto p-4">
+                        <div className="space-y-4 max-w-4xl mx-auto">
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-xl flex justify-between items-center">
+                                <span>Scope of Work</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(requirementsData.scope_of_work?.formatted || "")
+                                      .then(() => {
+                                        toast({
+                                          title: "Copied!",
+                                          description: "Scope of work copied to clipboard",
+                                        });
+                                      })
+                                      .catch(() => {
+                                        toast({
+                                          title: "Failed to copy",
+                                          description: "Could not copy to clipboard",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                  }}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="prose prose-sm max-w-none">
+                                {requirementsData.scope_of_work?.error ? (
+                                  <div className="text-red-500">Error extracting scope: {requirementsData.scope_of_work.error}</div>
+                                ) : (
+                                  <div className="space-y-6">
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Primary Requirements</h3>
+                                      <ul className="list-disc pl-5 space-y-1">
+                                        {requirementsData.scope_of_work?.primary_requirements?.map((req: string, i: number) => (
+                                          <li key={i}>{req}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Deliverables</h3>
+                                      <ul className="list-disc pl-5 space-y-1">
+                                        {requirementsData.scope_of_work?.deliverables?.map((del: string, i: number) => (
+                                          <li key={i}>{del}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Frequency Requirements</h3>
+                                      {requirementsData.scope_of_work?.frequency && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          {Object.entries(requirementsData.scope_of_work.frequency).map(([period, tasks]: [string, any]) => (
+                                            tasks && tasks.length > 0 ? (
+                                              <div key={period} className="border rounded p-3">
+                                                <h4 className="font-medium capitalize mb-2">{period}</h4>
+                                                <ul className="list-disc pl-5 space-y-1">
+                                                  {tasks.map((task: string, i: number) => (
+                                                    <li key={i}>{task}</li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            ) : null
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                          
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-xl flex justify-between items-center">
+                                <span>Evaluation Criteria</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(requirementsData.evaluation_criteria?.formatted || "")
+                                      .then(() => {
+                                        toast({
+                                          title: "Copied!",
+                                          description: "Evaluation criteria copied to clipboard",
+                                        });
+                                      })
+                                      .catch(() => {
+                                        toast({
+                                          title: "Failed to copy",
+                                          description: "Could not copy to clipboard",
+                                          variant: "destructive",
+                                        });
+                                      });
+                                  }}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="prose prose-sm max-w-none">
+                                {requirementsData.evaluation_criteria?.error ? (
+                                  <div className="text-red-500">Error extracting evaluation criteria: {requirementsData.evaluation_criteria.error}</div>
+                                ) : (
+                                  <div className="space-y-6">
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Evaluation Method</h3>
+                                      <p className="font-medium text-blue-700">{requirementsData.evaluation_criteria?.evaluation_method || "Not specified"}</p>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Technical Factors</h3>
+                                      <ul className="list-disc pl-5 space-y-1">
+                                        {requirementsData.evaluation_criteria?.technical_factors?.map((factor: string, i: number) => (
+                                          <li key={i}>{factor}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Past Performance Evaluation</h3>
+                                      <div className="border rounded p-3">
+                                        {typeof requirementsData.evaluation_criteria?.past_performance === 'string' ? (
+                                          <p>{requirementsData.evaluation_criteria?.past_performance}</p>
+                                        ) : (
+                                          <pre className="text-sm whitespace-pre-wrap">
+                                            {JSON.stringify(requirementsData.evaluation_criteria?.past_performance, null, 2)}
+                                          </pre>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Price Evaluation</h3>
+                                      <p>{requirementsData.evaluation_criteria?.price_evaluation || "Not specified"}</p>
+                                    </div>
+                                    
+                                    <div>
+                                      <h3 className="text-lg font-medium mb-2">Minimum Requirements</h3>
+                                      <ul className="list-disc pl-5 space-y-1">
+                                        {requirementsData.evaluation_criteria?.minimum_requirements?.map((req: string, i: number) => (
+                                          <li key={i}>{req}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Analysis Tab */}
+                    {activeTab === "analysis" && solicitationReport && (
+                      <div className="h-full overflow-y-auto p-4">
+                        <Card className="mb-4">
+                          <CardHeader>
+                            <CardTitle className="text-lg flex justify-between items-center">
+                              <span>Detailed Analysis</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(solicitationReport || "")
+                                    .then(() => {
+                                      toast({
+                                        title: "Copied!",
+                                        description: "Analysis copied to clipboard",
+                                      });
+                                    })
+                                    .catch(() => {
+                                      toast({
+                                        title: "Failed to copy",
+                                        description: "Could not copy to clipboard",
+                                        variant: "destructive",
+                                      });
+                                    });
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="prose prose-sm max-w-none">
+                              <ReactMarkdown>{solicitationReport || ""}</ReactMarkdown>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <div className="h-full p-4 flex flex-col items-center justify-center">
                   <div className="flex items-center space-x-2 text-orange-600">
